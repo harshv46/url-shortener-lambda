@@ -13,7 +13,7 @@ import (
 
 const (
 	LinksTableName = "UrlShortenerLinks"
-	Region         = "us-east-1"
+	Region         = "ap-south-1"
 )
 
 type Link struct {

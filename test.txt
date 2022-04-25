@@ -1,0 +1,1 @@
+curl https://yn14m0adqg.execute-api.ap-south-1.amazonaws.com/prod/shorten -X POST -d '{"url":"https://outcrawl.com/getting-started-microservices-go-grpc-kubernetes/"}' {"short_url":"SHORT_URL"}
