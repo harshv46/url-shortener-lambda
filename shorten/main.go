@@ -19,7 +19,8 @@ const (
 )
 
 type Request struct {
-	URL string `json:"url"`
+	URL   string `json:"url"`
+	alias string `json:"alias"`
 }
 
 type Response struct {
@@ -32,10 +33,10 @@ type Link struct {
 }
 
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-  // Setup CORS header
-  resp := events.APIGatewayProxyResponse{
-    Headers: make(map[string]string),
-  }
+	// Setup CORS header
+	resp := events.APIGatewayProxyResponse{
+		Headers: make(map[string]string),
+	}
 	resp.Headers["Access-Control-Allow-Origin"] = "*"
 	// Parse request body
 	rb := Request{}
@@ -50,15 +51,18 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		return resp, err
 	}
 	svc := dynamodb.New(sess)
-	// Generate short url
-	shortURL := shortid.MustGenerate()
-	// Because "shorten" endpoint is reserved
-	for shortURL == "shorten" {
-		shortURL = shortid.MustGenerate()
-	}
 	link := &Link{
-		ShortURL: shortURL,
+		ShortURL: rb.alias,
 		LongURL:  rb.URL,
+	}
+	if link.ShortURL == "" {
+		// Generate short url
+		link.ShortURL = shortid.MustGenerate()
+
+	}
+	// Because "shorten" endpoint is reserved
+	for link.ShortURL == "shorten" {
+		link.ShortURL = shortid.MustGenerate()
 	}
 	// Marshal link to attribute value map
 	av, err := dynamodbattribute.MarshalMap(link)
@@ -74,12 +78,12 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		return resp, err
 	}
 	// Return short url
-	response, err := json.Marshal(Response{ShortURL: shortURL})
+	response, err := json.Marshal(Response{ShortURL: link.ShortURL})
 	if err != nil {
 		return resp, err
 	}
-  resp.StatusCode = http.StatusOK
-  resp.Body = string(response)
+	resp.StatusCode = http.StatusOK
+	resp.Body = string(response)
 
 	return resp, nil
 }
