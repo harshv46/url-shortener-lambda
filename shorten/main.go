@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -20,6 +21,7 @@ const (
 
 type Request struct {
 	URL string `json:"url"`
+	Validity  int    `json:"validity"`
 }
 
 type Response struct {
@@ -29,6 +31,7 @@ type Response struct {
 type Link struct {
 	ShortURL string `json:"short_url"`
 	LongURL  string `json:"long_url"`
+	ExpDate  int    `json:"exp_date"`
 }
 
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -56,9 +59,13 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	for shortURL == "shorten" {
 		shortURL = shortid.MustGenerate()
 	}
+
+	days := rb.Validity
+
 	link := &Link{
 		ShortURL: shortURL,
 		LongURL:  rb.URL,
+		ExpDate:  int(time.Now().AddDate(0, 0, days).Unix()),
 	}
 	// Marshal link to attribute value map
 	av, err := dynamodbattribute.MarshalMap(link)
