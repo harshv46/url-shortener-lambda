@@ -20,7 +20,7 @@ const (
 
 type Request struct {
 	URL   string `json:"url"`
-	alias string `json:"alias"`
+	Alias string `json:"alias"`
 }
 
 type Response struct {
@@ -52,7 +52,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 	svc := dynamodb.New(sess)
 	link := &Link{
-		ShortURL: rb.alias,
+		ShortURL: rb.Alias,
 		LongURL:  rb.URL,
 	}
 	if link.ShortURL == "" {
