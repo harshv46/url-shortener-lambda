@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -21,6 +22,7 @@ const (
 type Request struct {
 	URL   string `json:"url"`
 	Alias string `json:"alias"`
+	Validity  int    `json:"validity"`
 }
 
 type Response struct {
@@ -30,6 +32,7 @@ type Response struct {
 type Link struct {
 	ShortURL string `json:"short_url"`
 	LongURL  string `json:"long_url"`
+	ExpDate  int    `json:"exp_date"`
 }
 
 // Start DynamoDB session
@@ -63,6 +66,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	link := &Link{
 		ShortURL: rb.Alias,
 		LongURL:  rb.URL,
+		ExpDate:  int(time.Now().AddDate(0, 0, rb.Validity).Unix()),
 	}
 	if link.ShortURL == "" {
 		// Generate short url
