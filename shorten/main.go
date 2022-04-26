@@ -35,6 +35,13 @@ type Link struct {
 	ExpDate  int    `json:"exp_date"`
 }
 
+// Start DynamoDB session
+var sess, sess_err = session.NewSession(&aws.Config{
+	Region: aws.String(Region),
+})
+
+var svc = dynamodb.New(sess)
+
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// Setup CORS header
 	resp := events.APIGatewayProxyResponse{
@@ -46,15 +53,16 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err := json.Unmarshal([]byte(request.Body), &rb); err != nil {
 		return resp, err
 	}
-	// Start DynamoDB session
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(Region),
-	})
-	if err != nil {
-		return resp, err
+	// If session not started correctly, try again
+	if sess_err != nil {
+		sess, sess_err := session.NewSession(&aws.Config{
+			Region: aws.String(Region),
+		})
+		if sess_err != nil {
+			return resp, sess_err
+		}
+		svc = dynamodb.New(sess)
 	}
-	svc := dynamodb.New(sess)
-
 	link := &Link{
 		ShortURL: rb.Alias,
 		LongURL:  rb.URL,
